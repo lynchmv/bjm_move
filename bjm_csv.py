@@ -127,6 +127,6 @@ def get_machine(machine_id, category_id, category_name):
     machine_csv.append(inventory_status(machine['sold'])) # In stock?
     write_line(machine_csv)
 
-header_line = ["Type","SKU","Name","Published","Is featured?","Visibility in catalog","Description","Tax status","In stock?","Backorders allowed?","Sold individually?","Allow customer reviews?","Regular price","Categories","Images","Position","Brand","Meta: _wp_page_template","Meta: _pans_ta","Meta: _wc_cog_cost","Meta: _bjm_owned","Meta: _wc_cor_cost","Meta: _bjm_sold","In Stock?"]
+header_line = ["Type","SKU","Name","Published","Is featured?","Visibility in catalog","Description","Tax status","In stock?","Backorders allowed?","Sold individually?","Allow customer reviews?","Regular price","Categories","Images","Position","Brand","Meta: _pans_ta","Meta: _wc_cog_cost","Meta: _bjm_owned","Meta: _wc_cor_cost","Meta: _bjm_sold","In Stock?"]
 write_header(header_line)
 get_categories()
