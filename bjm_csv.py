@@ -97,7 +97,12 @@ def get_machine(machine_id, category_id, category_name):
     picture_list = []
     try:
         for picture in machine_pics.json():
-            picture_list.append("https://benjones.com/machines/" + picture['name'])
+            root, ext = os.path.splitext(picture['name'])
+            if not ext:
+                ext = '.jpg'
+                picture_list.append("https://benjones.com/machines/" + picture['name'] + ext)
+            else:
+                picture_list.append("https://benjones.com/machines/" + picture['name'])
     except StopIteration:
         pass
     machine_vids = requests.get(VIDEO_URL, params=PARAMS_DICT, verify=VERIFY_SSL)
