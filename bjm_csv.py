@@ -77,7 +77,7 @@ def get_machine(machine_id, category_id, category_name):
         if machine['name'] is None: # Name
             machine_csv.append('Unknown')
         else:
-            machine_csv.append(machine['name'].title())
+            machine_csv.append(machine['name'])
         logging.debug(f"Machine name: {machine['name']}")
         machine_csv.append(1) # Published
         machine_csv.append(0) # Is Featured
