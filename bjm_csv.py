@@ -5,6 +5,7 @@
 import csv
 import datetime
 import logging
+import os
 import requests
 import urllib3
 import yaml
@@ -85,7 +86,7 @@ def get_machine(machine_id, category_id, category_name):
         machine_csv.append(machine['descr']) # Description
         logging.debug(f"Machine description: {machine['descr']}")
         machine_csv.append("taxable") # Tax status
-        machine_csv.append(1) # In stock?
+        machine_csv.append(machine['active']) # In stock?
         machine_csv.append(0) # Backorders allowed?
         machine_csv.append(0) # Sold individually
         machine_csv.append(0) # Allow customer reviews
@@ -129,9 +130,9 @@ def get_machine(machine_id, category_id, category_name):
     machine_csv.append(machine['owned'] or '0') # _bjm_owned
     machine_csv.append(machine['rigging'] or '0') # _wc_cor_cost
     machine_csv.append(machine['sold']) # _bjm_sold
-    machine_csv.append(inventory_status(machine['sold'])) # In stock?
+    # machine_csv.append(inventory_status(machine['sold'])) # In stock?
     write_line(machine_csv)
 
-header_line = ["Type","SKU","Name","Published","Is featured?","Visibility in catalog","Description","Tax status","In stock?","Backorders allowed?","Sold individually?","Allow customer reviews?","Regular price","Categories","Images","Position","Brand","Meta: _pans_ta","Meta: _wc_cog_cost","Meta: _bjm_owned","Meta: _wc_cor_cost","Meta: _bjm_sold","In Stock?"]
+header_line = ["Type","SKU","Name","Published","Is featured?","Visibility in catalog","Description","Tax status","In stock?","Backorders allowed?","Sold individually?","Allow customer reviews?","Regular price","Categories","Images","Position","Brand","Meta: _pans_ta","Meta: _wc_cog_cost","Meta: _bjm_owned","Meta: _wc_cor_cost","Meta: _bjm_sold"]
 write_header(header_line)
 get_categories()
