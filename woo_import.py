@@ -60,6 +60,13 @@ def stock_qty(sold):
         result = 1
     return result
 
+def active_status(active):
+    logging.debug(f"Machine active status: {active}")
+    result = 'hidden'
+    if active == '1':
+        result = 'visible'
+    return result
+
 def get_category(category_id):
     """ Get info for a category """
     response = requests.get(CATEGORY_URL, params=PARAMS_DICT, verify=VERIFY_SSL)
@@ -91,6 +98,7 @@ def get_machines():
         machine_json['manage_stock'] = True # Manage stock
         machine_json['stock_status'] = inventory_status(machine['sold']) # In stock?
         machine_json['stock_quantity'] = stock_qty(machine['sold']) # Stock quantity
+        machine_json['catalog_visibility'] = active_status(machine['active']) # Catalog visibility
         machine_json['reviews_allowed'] = False # Allow customer reviews
         machine_json['price'] = machine['price'] # Regular price
         machine_json['regular_price'] = machine['price'] # Regular price
