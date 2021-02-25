@@ -87,9 +87,11 @@ def get_machines():
     for machine in machine_info.json():
         machine_json = {'type': 'simple'} # Type
         if machine['origid'] is None:
-            machine_json['sku'] = int(machine['mid']) + 50000
+            new_sku = int(machine['mid']) + 50000
+            machine_json['sku'] = str(new_sku)
         else:
-            machine_json['sku'] = machine['origid']
+            new_sku = machine['origid']
+            machine_json['sku'] = str(new_sku)
         if machine['name'] is None: # Name
             machine_json['name'] = 'Unknown'
         else:
