@@ -37,7 +37,7 @@ wcapi = API(
     consumer_key=CONFIG_DATA['consumer_key'],
     consumer_secret=CONFIG_DATA['consumer_secret'],
     version="wc/v3",
-    timeout=600,
+    timeout=900,
     query_string_auth=True
 )
 
