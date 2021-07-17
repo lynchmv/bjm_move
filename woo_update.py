@@ -19,13 +19,13 @@ CONFIG_FILE = open('db_config.yml', 'r')
 CONFIG_DATA = yaml.load(CONFIG_FILE, Loader=yaml.FullLoader)
 
 LOGLEVEL = CONFIG_DATA['log_lvl'].upper()
-logging.basicConfig(filename='woo_import.log', filemode='w', format='%(asctime)s | %(levelname)s | %(message)s', level=LOGLEVEL)
+logging.basicConfig(filename='woo_update.log', filemode='w', format='%(asctime)s | %(levelname)s | %(message)s', level=LOGLEVEL)
 
-CATEGORY_URL = 'https://www.benjones.com/api/categories.php'
-MACHINE_URL = 'https://www.benjones.com/api/machines.php'
-PICTURE_URL = 'https://www.benjones.com/api/pictures.php'
-VIDEO_URL = 'https://www.benjones.com/api/videos.php'
-GET_IT_ALL = 'https://www.benjones.com/api/machines_dos.php'
+CATEGORY_URL = 'https://www.old.benjones.com/api/categories.php'
+MACHINE_URL = 'https://www.old.benjones.com/api/machines.php'
+PICTURE_URL = 'https://www.old.benjones.com/api/pictures.php'
+VIDEO_URL = 'https://www.old.benjones.com/api/videos.php'
+GET_IT_ALL = 'https://www.old.benjones.com/api/machines_dos.php'
 PARAMS_DICT = {'key': CONFIG_DATA['api_key']}
 
 CURRENT_TIME = datetime.datetime.now()
@@ -85,27 +85,28 @@ def get_machines():
     """ Get all machines """
     machine_info = requests.get(GET_IT_ALL, params=PARAMS_DICT, verify=VERIFY_SSL)
     # for machine in itertools.islice(machine_info.json(), 10):
-    for machine in machine_info.json():
+    json_data = machine_info.json()
+    for machine in json_data:
         machine_json = {'type': 'simple'} # Type
-        if machine['origid'] is None:
-            new_sku = int(machine['mid']) + 50000
+        if json_data[machine]['origid'] is None:
+            new_sku = int(json_data[machine]['mid']) + 50000
             machine_json['sku'] = str(new_sku)
         else:
-            new_sku = machine['origid']
+            new_sku = json_data[machine]['origid']
             machine_json['sku'] = str(new_sku)
-        if machine['name'] is None: # Name
+        if json_data[machine]['name'] is None: # Name
             machine_json['name'] = 'Unknown'
         else:
-            machine_json['name'] = machine['name']
-        machine_json['description'] = (machine['descr']) # Description
+            machine_json['name'] = json_data[machine]['name']
+        machine_json['description'] = (json_data[machine]['descr']) # Description
         machine_json['manage_stock'] = True # Manage stock
-        machine_json['stock_status'] = inventory_status(machine['sold']) # In stock?
-        machine_json['stock_quantity'] = stock_qty(machine['sold']) # Stock quantity
-        machine_json['catalog_visibility'] = active_status(machine['active']) # Catalog visibility
+        machine_json['stock_status'] = inventory_status(json_data[machine]['sold']) # In stock?
+        machine_json['stock_quantity'] = stock_qty(json_data[machine]['sold']) # Stock quantity
+        machine_json['catalog_visibility'] = active_status(json_data[machine]['active']) # Catalog visibility
         machine_json['reviews_allowed'] = False # Allow customer reviews
-        machine_json['price'] = machine['price'] # Regular price
-        machine_json['regular_price'] = machine['price'] # Regular price
-        if len(machine['cat']) > 0:
+        machine_json['price'] = json_data[machine]['price'] # Regular price
+        machine_json['regular_price'] = json_data[machine]['price'] # Regular price
+        if len(json_data[machine]['cat']) > 0:
             '''
             +-----+------------------------------+
             | cid | name                         |
@@ -121,7 +122,7 @@ def get_machines():
             |  59 | Truck Scales & Dumpers       |
             +-----+------------------------------+
             '''
-            bjm_cat_name = machine['cat'][0]['name']
+            bjm_cat_name = json_data[machine]['cat'][0]['name']
             if bjm_cat_name == 'Canters & Slabbers':
                 woo_cat_id = 479
             elif bjm_cat_name == 'Complete Plants & Operations':
@@ -140,8 +141,8 @@ def get_machines():
                 woo_cat_id = 514
             elif bjm_cat_name == 'Truck Scales & Dumpers':
                 woo_cat_id = 529
-            else
-                cat_info = wcapi.get("products/categories", params={"search": cgi.escape(machine['cat'][0]['name'])}).json()
+            else:
+                cat_info = wcapi.get("products/categories", params={"search": cgi.escape(json_data[machine]['cat'][0]['name'])}).json()
                 for item in cat_info:
                     woo_cat_id = item['id']
         else:
@@ -149,7 +150,7 @@ def get_machines():
             for item in cat_info:
                 woo_cat_id = item['id']
         machine_json['categories'] = [ {"id": woo_cat_id} ] # Categories
-        machine_pics = machine['pics']
+        machine_pics = json_data[machine]['pics']
         picture_list = []
         picture_list.clear()
         try:
@@ -157,14 +158,14 @@ def get_machines():
                 root, ext = os.path.splitext(picture['name'])
                 if not ext:
                     ext = '.jpg'
-                    pic_src = {'src': 'https://benjones.com/machines/' + picture['name'] + ext}
+                    pic_src = {'src': 'https://www.old.benjones.com/machines/' + picture['name'] + ext}
                     picture_list.append(dict(pic_src))
                 else:
-                    pic_src = {'src': 'https://benjones.com/machines/' + picture['name']}
+                    pic_src = {'src': 'https://www.old.benjones.com/machines/' + picture['name']}
                     picture_list.append(dict(pic_src))
         except StopIteration:
             pass
-        machine_vids = machine['vids']
+        machine_vids = json_data[machine]['vids']
         try:
             for video in machine_vids:
                 video_src = {'src': video['link']}
@@ -173,36 +174,40 @@ def get_machines():
             pass
         if picture_list:
             machine_json['images'] = picture_list
-        if machine['mfg'] is not None: # Brand
-            machine_json['brands'] = get_brand(machine['mfg'].title())
+        if json_data[machine]['mfg'] is not None: # Brand
+            machine_json['brands'] = get_brand(json_data[machine]['mfg'].title())
         meta_list = []
         meta_list.clear()
-        if machine['contact'] is not None:
-            if not isinstance(machine['contact'], (int, float)) and len(machine['contact']) > 0:
-                if machine['contact'][0]['contact'] is not None:
-                    contact = machine['contact'][0]['contact']
+        if json_data[machine]['contact'] is not None:
+            if not isinstance(json_data[machine]['contact'], (int, float)) and len(json_data[machine]['contact']) > 0:
+                if json_data[machine]['contact'][0]['contact'] is not None:
+                    contact = json_data[machine]['contact'][0]['contact']
                     clean_contact = contact.replace(", ,", "")
                     clean_contact = clean_contact.replace(" No Company", "")
                     bjm_contact = {"key": "_bjm_contact", "value": clean_contact}
                     meta_list.append(dict(bjm_contact))
-        notes = machine['notes'] or ' '
+        notes = json_data[machine]['notes'] or ' '
         admin_notes = {"key": "_pans_ta", "value": notes}
         meta_list.append(dict(admin_notes))
-        cost = machine['cost'] or '0'
+        cost = json_data[machine]['cost'] or '0'
         cog_cost = {"key": "_bjm_cost", "value": cost}
         meta_list.append(dict(cog_cost))
-        owned = machine['owned'] or 'No'
+        owned = json_data[machine]['owned'] or 'No'
         bjm_owned = {"key": "_bjm_owned", "value": owned}
         meta_list.append(dict(bjm_owned))
-        rigging = machine['rigging'] or '0'
+        rigging = json_data[machine]['rigging'] or '0'
         cor_cost = {"key": "_bjm_rigging", "value": rigging}
         meta_list.append(dict(cor_cost))
-        bjm_sold = {"key": "_bjm_sold", "value": machine['sold']}
+        bjm_sold = {"key": "_bjm_sold", "value": json_data[machine]['sold']}
         meta_list.append(dict(bjm_sold))
-        bjm_location = {"key": "_bjm_location", "value": machine['location']}
+        bjm_location = {"key": "_bjm_location", "value": json_data[machine]['location']}
         meta_list.append(dict(bjm_location))
         machine_json['meta_data'] = meta_list
-        result = wcapi.post("products", machine_json)
+        product_search = f"products?sku={new_sku}"
+        item_info = wcapi.get(product_search).json()
+        print(f"Updating item ID: {item_info[0]['id']}")
+        update_item = f"products/{item_info[0]['id']}"
+        result = wcapi.put(update_item, machine_json)
         if result.status_code > 202:
             logging.error(json.dumps(machine_json))
             logging.error(f"Result status: {result.status_code}")
