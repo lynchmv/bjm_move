@@ -3,6 +3,7 @@
 # pylint: disable=line-too-long
 
 import datetime
+import cgi
 import itertools
 import json
 import logging
@@ -105,7 +106,7 @@ def get_machines():
         machine_json['price'] = machine['price'] # Regular price
         machine_json['regular_price'] = machine['price'] # Regular price
         if len(machine['cat']) > 0:
-            cat_info = wcapi.get("products/categories", params={"search": machine['cat'][0]['name']}).json()
+            cat_info = wcapi.get("products/categories", params={"search": cgi.escape(machine['cat'][0]['name'])}).json()
             for item in cat_info:
                 woo_cat_id = item['id']
         else:
@@ -141,13 +142,21 @@ def get_machines():
             machine_json['brands'] = get_brand(machine['mfg'].title())
         meta_list = []
         meta_list.clear()
+        if machine['contact'] is not None:
+            if not isinstance(machine['contact'], (int, float)) and len(machine['contact']) > 0:
+                if machine['contact'][0]['contact'] is not None:
+                    contact = machine['contact'][0]['contact']
+                    clean_contact = contact.replace(", ,", "")
+                    clean_contact = clean_contact.replace(" No Company", "")
+                    bjm_contact = {"key": "_bjm_contact", "value": clean_contact}
+                    meta_list.append(dict(bjm_contact))
         notes = machine['notes'] or ' '
         admin_notes = {"key": "_pans_ta", "value": notes}
         meta_list.append(dict(admin_notes))
         cost = machine['cost'] or '0'
         cog_cost = {"key": "_bjm_cost", "value": cost}
         meta_list.append(dict(cog_cost))
-        owned = machine['owned'] or '0'
+        owned = machine['owned'] or 'No'
         bjm_owned = {"key": "_bjm_owned", "value": owned}
         meta_list.append(dict(bjm_owned))
         rigging = machine['rigging'] or '0'
